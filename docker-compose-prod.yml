@@ -1,0 +1,179 @@
+version: '3.8'
+
+networks:
+  tp-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=microservices_db
+    networks:
+      - tp-network
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - tp-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    networks:
+      - tp-network
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  config-server:
+    image: TON_USER_DOCKER/configserver:latest
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - tp-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=git
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=https://github.com/yassir1410/libraryConfig
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  discovery-service:
+    image: TON_USER_DOCKER/eurekaserver:latest
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    depends_on:
+      config-server:
+        condition: service_healthy
+    networks:
+      - tp-network
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+
+  user-service:
+    image: TON_USER_DOCKER/user-microservice:latest
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - tp-network
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+
+  book-service:
+    image: TON_USER_DOCKER/book-microservice:latest
+    container_name: book-service
+    ports:
+      - "9090:9090"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - tp-network
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+
+  emprunt-service:
+    image: TON_USER_DOCKER/emprunttservice:latest
+    container_name: emprunt-service
+    ports:
+      - "8086:8086"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+      mysql-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - tp-network
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+
+  notification-service:
+    image: TON_USER_DOCKER/notification-service:latest
+    container_name: notification-service
+    ports:
+      - "8088:8088"
+    depends_on:
+      kafka:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+    networks:
+      - tp-network
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+
+  gateway-service:
+    image: TON_USER_DOCKER/gatewayservice:latest
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+    networks:
+      - tp-network
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true

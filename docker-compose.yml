@@ -58,13 +58,11 @@ services:
     container_name: config-server
     ports:
       - "8888:8888"
-    volumes:
-      - /home/yassir/Downloads/TPmicroservice/config-repo:/config-repo
     networks:
       - tp-network
     environment:
       - SPRING_PROFILES_ACTIVE=git
-      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=file:///config-repo
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=https://github.com/yassir1410/libraryConfig
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]

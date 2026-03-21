@@ -1,0 +1,83 @@
+name: Microservices CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  # 1. PHASE DE TESTS (S'exécute pour chaque microservice)
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [EurekaServer, configServer, gateWayService, book-microservice, user-microservice, emprunttService, notification-service]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Run Tests
+        run: mvn clean test -f ${{ matrix.service }}/pom.xml
+
+  # 2. PHASE DE BUILD & PUSH DOCKER (Si les tests réussissent)
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [EurekaServer, configServer, gateWayService, book-microservice, user-microservice, emprunttService, notification-service]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Build JAR (sans relancer les tests)
+        run: mvn clean package -DskipTests -f ${{ matrix.service }}/pom.xml
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        run: |
+          # Convertit le nom du dossier en minuscules pour Docker Hub
+          SERVICE_LOWER=$(echo "${{ matrix.service }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/$SERVICE_LOWER:latest ./${{ matrix.service }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/$SERVICE_LOWER:latest
+
+  # 3. PHASE DE DÉPLOIEMENT (S'exécute UNIQUEMENT sur la branche main)
+  deploy:
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Copier docker-compose.yml sur DigitalOcean
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          source: "docker-compose.yml"
+          target: "/root/app-bibliotheque"
+
+      - name: Déployer sur le serveur DigitalOcean
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            cd /root/app-bibliotheque
+            docker-compose pull
+            docker-compose down
+            docker-compose up -d
