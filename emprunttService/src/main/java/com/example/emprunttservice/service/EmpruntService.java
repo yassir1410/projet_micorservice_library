@@ -4,6 +4,7 @@ import com.example.emprunttservice.dto.BookDto;
 import com.example.emprunttservice.dto.EmpruntResponseDto;
 import com.example.emprunttservice.dto.UserDto;
 import com.example.emprunttservice.entity.Emprunt;
+import com.example.emprunttservice.exception.ResourceNotFoundException;
 import com.example.emprunttservice.feign.BookServiceClient;
 import com.example.emprunttservice.feign.UserServiceClient;
 import com.example.emprunttservice.repository.EmpruntServiceRepository;
@@ -81,7 +82,7 @@ public class EmpruntService {
                 throw new RuntimeException("Error fetching emprunt details: " + ex.getMessage(), ex);
             }
         }
-        throw new RuntimeException("Emprunt not found with id: " + id);
+        throw new ResourceNotFoundException("Emprunt not found with id: " + id);
     }
 
     /**
@@ -180,7 +181,7 @@ public class EmpruntService {
         if (empruntRepository.existsById(id)) {
             empruntRepository.deleteById(id);
         } else {
-            throw new RuntimeException("Emprunt not found with id: " + id);
+            throw new ResourceNotFoundException("Emprunt not found with id: " + id);
         }
     }
 }
