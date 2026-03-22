@@ -73,9 +73,9 @@ jobs:
       - name: Déployer sur le serveur DigitalOcean
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.DO_HOST }}
-          username: ${{ secrets.DO_USERNAME }}
-          key: ${{ secrets.DO_SSH_KEY }}
+          host: ${{ secrets.DOCKERHOST }}
+          username: ${{ secrets.DOCKERUSERNAME }}
+          key: ${{ secrets.SERVIERKEY }}
           script: |
             cd /root/app-bibliotheque
             docker-compose pull
