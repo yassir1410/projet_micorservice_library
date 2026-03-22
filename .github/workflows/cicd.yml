@@ -64,9 +64,9 @@ jobs:
       - name: Copier docker-compose.yml sur DigitalOcean
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.DO_HOST }}
-          username: ${{ secrets.DO_USERNAME }}
-          key: ${{ secrets.DO_SSH_KEY }}
+          host: ${{ secrets.DOCKERHOST }}
+          username: ${{ secrets.DOCKERUSERNAME }}
+          key: ${{ secrets.SERVIERKEY}}
           source: "docker-compose.yml"
           target: "/root/app-bibliotheque"
 
