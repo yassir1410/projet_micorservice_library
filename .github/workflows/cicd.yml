@@ -77,7 +77,7 @@ jobs:
           username: ${{ secrets.DOCKERUSERNAME }}
           key: ${{ secrets.SERVIERKEY }}
           script: |
-            cd /root/app-bibliotheque
-            docker-compose pull
-            docker-compose down
-            docker-compose up -d
+                  cd /root/app-bibliotheque
+                  docker compose -f docker-compose-prod.yml pull
+                  docker compose -f docker-compose-prod.yml down
+                  docker compose -f docker-compose-prod.yml up -d
