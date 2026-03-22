@@ -252,5 +252,5 @@ Toutes les dépendances communes (Spring Cloud, Eureka, Kafka, etc.) sont défin
 ---
 
 **Auteur :** Projet TP - Microservices Bibliothèque  
-**Date :** 20265
+**Date :** 2026
 
