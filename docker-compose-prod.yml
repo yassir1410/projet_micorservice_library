@@ -52,7 +52,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   config-server:
-    image: TON_USER_DOCKER/configserver:latest
+    image: yassirfahimi/configserver:latest
     container_name: config-server
     ports:
       - "8888:8888"
@@ -69,7 +69,7 @@ services:
       retries: 5
 
   discovery-service:
-    image: TON_USER_DOCKER/eurekaserver:latest
+    image: yassirfahimi/eurekaserver:latest
     container_name: discovery-service
     ports:
       - "8761:8761"
@@ -83,7 +83,7 @@ services:
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
 
   user-service:
-    image: TON_USER_DOCKER/user-microservice:latest
+    image: yassirfahimi/user-microservice:latest
     container_name: user-service
     ports:
       - "8081:8081"
@@ -103,7 +103,7 @@ services:
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
 
   book-service:
-    image: TON_USER_DOCKER/book-microservice:latest
+    image: yassirfahimi/book-microservice:latest
     container_name: book-service
     ports:
       - "9090:9090"
@@ -122,7 +122,7 @@ services:
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
 
   emprunt-service:
-    image: TON_USER_DOCKER/emprunttservice:latest
+    image: yassirfahimi/emprunttservice:latest
     container_name: emprunt-service
     ports:
       - "8086:8086"
@@ -144,7 +144,7 @@ services:
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
 
   notification-service:
-    image: TON_USER_DOCKER/notification-service:latest
+    image: yassirfahimi/notification-service:latest
     container_name: notification-service
     ports:
       - "8088:8088"
@@ -162,7 +162,7 @@ services:
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
 
   gateway-service:
-    image: TON_USER_DOCKER/gatewayservice:latest
+    image: yassirfahimi/gatewayservice:latest
     container_name: gateway-service
     ports:
       - "8080:8080"
