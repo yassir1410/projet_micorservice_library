@@ -67,7 +67,7 @@ jobs:
           host: ${{ secrets.DOCKERHOST }}
           username: ${{ secrets.DOCKERUSERNAME }}
           key: ${{ secrets.SERVIERKEY}}
-          source: "docker-compose.yml"
+          source: "docker-compose-prod.yml"
           target: "/root/app-bibliotheque"
 
       - name: Déployer sur le serveur DigitalOcean
